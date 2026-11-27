@@ -1,48 +1,32 @@
-# Web Editor
+# React + TypeScript + Vite
 
-A self-contained, multi-tab text editor that runs entirely in the browser. No login, no uploads, no build step — your data never leaves your device.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- **Multi-tab editing** — open several files at once, switch between them
-- **Auto-save** — workspace is saved to browser `localStorage` automatically
-- **Share via link** — export the whole workspace as a `data:` URI; anyone with the link can import it (works offline)
-- **Import from link** — paste a `data:` URI to restore a workspace
-- **Encryption** — encrypt/decrypt the active tab with a password (Web Crypto AES-GCM + PBKDF2)
-- **Works offline** — single HTML file, no dependencies
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Usage
+## React Compiler
 
-Open `index.html` in any modern browser, or visit the GitHub Pages deployment.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-| Action | How |
-|--------|-----|
-| New tab | `+ New` |
-| Switch tabs | click a tab |
-| Close tab | `×` on a tab |
-| Share workspace | `Share` → copies a `data:` link to clipboard |
-| Import workspace | `Import` → paste a `data:` link |
-| Encrypt active tab | `Encrypt` → enter password |
-| Decrypt active tab | `Decrypt` → enter password |
+## Expanding the Oxlint configuration
 
-## File layout
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `tsrs` and editing `.oxlintrc.json`:
 
-```
-index.html   # application UI
-style.css    # styles
-app.js       # editor logic (tabs, storage, data URI, encryption)
-README.md
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
 ```
 
-## Deploy (GitHub Pages)
-
-```bash
-git add .
-git commit -m "Initial release"
-git push origin main
-```
-Then enable GitHub Pages in repo settings (source: `main` branch, `/root` folder).
-
-## License
-
-MIT
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

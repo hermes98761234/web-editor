@@ -13,7 +13,7 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-html, body { height: 100%; }
+html, body, #root { height: 100%; }
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
@@ -56,7 +56,6 @@ button {
 }
 button:hover { background: #475569; border-color: var(--accent); }
 button:active { transform: translateY(1px); }
-button.secondary { background: transparent; }
 
 .tabs-bar {
   display: flex;
@@ -93,6 +92,11 @@ button.secondary { background: transparent; }
   color: var(--text);
   font-weight: 600;
 }
+.tab.tab-encrypted .tab-name::after {
+  content: " 🔒";
+  font-size: 0.85em;
+  opacity: 0.8;
+}
 .tab .tab-close {
   border: none;
   background: none;
@@ -111,10 +115,7 @@ button.secondary { background: transparent; }
   top: -2px;
 }
 
-.editor-area {
-  flex: 1;
-  position: relative;
-}
+.editor-area { flex: 1; position: relative; }
 
 #editor {
   width: 100%;
@@ -129,7 +130,6 @@ button.secondary { background: transparent; }
   outline: none;
   resize: none;
   overflow: auto;
-  transition: background 0.2s, color 0.2s;
 }
 
 .status-bar {
@@ -144,6 +144,7 @@ button.secondary { background: transparent; }
 }
 .divider { opacity: 0.6; }
 .badge {
+  margin-left: auto;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
   background: rgba(56, 189, 248, 0.15);
@@ -151,9 +152,7 @@ button.secondary { background: transparent; }
   border: 1px solid rgba(56, 189, 248, 0.3);
   font-size: 0.75rem;
   font-weight: 600;
-  margin-left: auto;
 }
-.badge.hidden { display: none; }
 
 dialog {
   border: none;
@@ -168,8 +167,9 @@ dialog {
 dialog::backdrop { background: rgba(0,0,0,0.6); }
 dialog h3 { margin-bottom: 0.75rem; color: var(--accent); }
 dialog p { margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem; }
-dialog textarea { width: 100%; height: 90px; font-family: inherit; font-size: 0.9rem; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); resize: vertical; }
-dialog input { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 0.95rem; margin-bottom: 1rem; }
+dialog textarea, dialog input { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 0.9rem; }
+dialog textarea { height: 90px; font-family: inherit; resize: vertical; }
+dialog input { margin-bottom: 1rem; font-size: 0.95rem; }
 .dlg-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .dlg-actions button { padding: 0.4rem 0.9rem; }
 
