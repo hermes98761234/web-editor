@@ -2,6 +2,7 @@
  * Component: App (UI layer)
  * Root Gedit shell — all state and DOM operations here.
  * Editor is pure presentational (zero hooks).
+ * ALL hooks are called before any conditional return (Rules of Hooks).
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -23,6 +24,7 @@ import { WebCryptoImportService } from '../infrastructure/WebCryptoImportService
 import { TabFactory } from '../domain/factories/TabFactory';
 
 export default function App() {
+  // Dependency injection
   const [app] = useState(() => {
     const repository = new LocalStorageTabRepository();
     const encryption = new WebCryptoEncryptionService();
@@ -32,6 +34,7 @@ export default function App() {
     return new EditorApplicationService(repository, encryption, exportService, importService, factory);
   });
 
+  // All useState hooks
   const [initialized, setInitialized] = useState(false);
   const [status, setStatus] = useState('Initializing…');
   const [sidePanelOpen, setSidePanelOpen] = useState(true);
@@ -51,6 +54,7 @@ export default function App() {
   const [undoStack, setUndoStack] = useState<string[]>(['']);
   const [undoIndex, setUndoIndex] = useState(0);
 
+  // All useEffect hooks (before any conditional return)
   useEffect(() => {
     app.initialize().then(() => {
       setInitialized(true);
@@ -68,19 +72,14 @@ export default function App() {
     setUndoIndex(0);
   }, [app, initialized]);
 
-  if (!initialized) {
-    return (
-      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div className="gedit-status-item">{status}</div>
-      </div>
-    );
-  }
-
-  const activeTab = app.getActiveTab();
-  const workspace = app.getWorkspace();
+  // Compute derived values with fallback for uninitialized state
+  // (done before early return so hooks below have stable dependencies)
+  const activeTab = initialized ? app.getActiveTab() : { content: '', encrypted: false, name: 'Untitled', id: '' };
+  const workspace = initialized ? app.getWorkspace() : { tabs: [], activeIndex: 0 };
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
   const lines = activeTab.content.split('\n').length;
 
+  // All useCallback hooks (before any conditional return)
   const handleContentChange = useCallback((content: string) => {
     app.setActiveContent(content);
     setUndoStack((prev) => {
@@ -335,6 +334,15 @@ export default function App() {
     setPreferencesOpen(false);
     setStatus('Preferences saved');
   }, []);
+
+  // Early return for uninitialized state (ALL hooks above are called every render)
+  if (!initialized) {
+    return (
+      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="gedit-status-item">{status}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="gedit-app">
