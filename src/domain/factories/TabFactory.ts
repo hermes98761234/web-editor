@@ -25,4 +25,9 @@ export class TabFactory {
       Boolean(data.encrypted)
     );
   }
+
+  /** Create a tab with given name and content. */
+  createWithContent(name: string, content: string): Tab {
+    return new Tab(crypto.randomUUID(), name, content, false);
+  }
 }

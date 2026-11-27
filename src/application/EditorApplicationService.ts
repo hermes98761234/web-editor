@@ -153,6 +153,36 @@ export class EditorApplicationService {
     return true;
   }
 
+  /** Open a file and add it as a new tab. */
+  openFile(name: string, content: string): void {
+    const tab = this.factory.createWithContent(name, content);
+    this.tabs.push(tab);
+    this.activeIndex = this.tabs.length - 1;
+    this.persist();
+  }
+
+  /** Save the active tab's content to a file (download). */
+  saveActiveFile(): void {
+    const tab = this.tabs[this.activeIndex];
+    const blob = new Blob([tab.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = tab.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /** Save the active tab's content with a new name (download). */
+  saveActiveFileAs(name: string): void {
+    const tab = this.tabs[this.activeIndex];
+    tab.rename(name);
+    this.saveActiveFile();
+    this.persist();
+  }
+
   /** Persist the current state to the repository. */
   private persist(): void {
     void this.repository.saveAll(this.tabs);

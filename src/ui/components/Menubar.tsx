@@ -1,129 +1,207 @@
 /**
- * Component: Menubar
- * Top menu bar — File, Edit, Settings, About — like a real desktop editor.
+ * Component: Menubar (UI layer)
+ * Gedit-style menu bar: File, Edit, View, Search, Tools, Documents, Help
  */
 
-import { EditorApplicationService } from '../../application/EditorApplicationService';
+import { useState } from 'react';
 
 interface MenubarProps {
-  app: EditorApplicationService;
-  onNewTab: () => void;
-  onCloseTab: () => void;
+  onNewDocument: () => void;
+  onOpenFile: () => void;
+  onSave: () => void;
+  onSaveAs: () => void;
   onExport: () => void;
   onImport: () => void;
-  onEncrypt: () => void;
-  onDecrypt: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
   onCopy: () => void;
   onPaste: () => void;
   onSelectAll: () => void;
+  onFind: () => void;
+  onGoToLine: () => void;
+  onEncrypt: () => void;
+  onDecrypt: () => void;
+  onPreferences: () => void;
+  onAbout: () => void;
+  onToggleSidePanel: () => void;
+  onToggleBottomPanel: () => void;
+  onToggleWrap: () => void;
+  onToggleLineNumbers: () => void;
+  onQuit: () => void;
 }
 
 export function Menubar(props: MenubarProps) {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const mod = isMac ? '⌘' : 'Ctrl';
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const toggleMenu = (name: string) => {
+    setOpenMenu(openMenu === name ? null : name);
+  };
+
+  const closeAll = () => setOpenMenu(null);
 
   return (
-    <nav className="menubar" role="menubar" aria-label="Main menu">
-      <div className="menu">
-        <button type="button" className="menu-title">File</button>
-        <div className="menu-dropdown" role="menu">
-          <button type="button" className="menu-item" onClick={props.onNewTab}>
-            <span className="menu-label">New tab</span>
-            <span className="menu-shortcut">{mod}+N</span>
+    <>
+      <nav className="gedit-menubar" role="menubar">
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'file'}
+          onClick={() => toggleMenu('file')}
+          onMouseEnter={() => setOpenMenu('file')}
+        >
+          File
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'file' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onNewDocument(); closeAll(); }}>
+            New<span className="gedit-shortcut">Ctrl+N</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onExport}>
-            <span className="menu-label">Share workspace</span>
-            <span className="menu-shortcut">{mod}+S</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onOpenFile(); closeAll(); }}>
+            Open<span className="gedit-shortcut">Ctrl+O</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onImport}>
-            <span className="menu-label">Import workspace</span>
-            <span className="menu-shortcut">{mod}+O</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onSave(); closeAll(); }}>
+            Save<span className="gedit-shortcut">Ctrl+S</span>
           </button>
-          <div className="menu-separator" />
-          <button type="button" className="menu-item" onClick={props.onEncrypt}>
-            <span className="menu-label">Encrypt tab</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onSaveAs(); closeAll(); }}>
+            Save As…<span className="gedit-shortcut">Ctrl+Shift+S</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onDecrypt}>
-            <span className="menu-label">Decrypt tab</span>
+          <div className="gedit-menu-separator" />
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onExport(); closeAll(); }}>
+            Export Workspace<span className="gedit-shortcut">Ctrl+E</span>
           </button>
-          <div className="menu-separator" />
-          <button type="button" className="menu-item" onClick={props.onCloseTab}>
-            <span className="menu-label">Close tab</span>
-            <span className="menu-shortcut">{mod}+W</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onImport(); closeAll(); }}>
+            Import Workspace<span className="gedit-shortcut">Ctrl+I</span>
+          </button>
+          <div className="gedit-menu-separator" />
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onQuit(); closeAll(); }}>
+            Quit<span className="gedit-shortcut">Ctrl+Q</span>
           </button>
         </div>
-      </div>
 
-      <div className="menu">
-        <button type="button" className="menu-title">Edit</button>
-        <div className="menu-dropdown" role="menu">
-          <button type="button" className="menu-item" onClick={props.onUndo}>
-            <span className="menu-label">Undo</span>
-            <span className="menu-shortcut">{mod}+Z</span>
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'edit'}
+          onClick={() => toggleMenu('edit')}
+          onMouseEnter={() => setOpenMenu('edit')}
+        >
+          Edit
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'edit' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onUndo(); closeAll(); }}>
+            Undo<span className="gedit-shortcut">Ctrl+Z</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onRedo}>
-            <span className="menu-label">Redo</span>
-            <span className="menu-shortcut">{mod}+Shift+Z</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onRedo(); closeAll(); }}>
+            Redo<span className="gedit-shortcut">Ctrl+Y</span>
           </button>
-          <div className="menu-separator" />
-          <button type="button" className="menu-item" onClick={props.onCut}>
-            <span className="menu-label">Cut</span>
-            <span className="menu-shortcut">{mod}+X</span>
+          <div className="gedit-menu-separator" />
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onCut(); closeAll(); }}>
+            Cut<span className="gedit-shortcut">Ctrl+X</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onCopy}>
-            <span className="menu-label">Copy</span>
-            <span className="menu-shortcut">{mod}+C</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onCopy(); closeAll(); }}>
+            Copy<span className="gedit-shortcut">Ctrl+C</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onPaste}>
-            <span className="menu-label">Paste</span>
-            <span className="menu-shortcut">{mod}+V</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onPaste(); closeAll(); }}>
+            Paste<span className="gedit-shortcut">Ctrl+V</span>
           </button>
-          <button type="button" className="menu-item" onClick={props.onSelectAll}>
-            <span className="menu-label">Select all</span>
-            <span className="menu-shortcut">{mod}+A</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onSelectAll(); closeAll(); }}>
+            Select All<span className="gedit-shortcut">Ctrl+A</span>
           </button>
         </div>
-      </div>
 
-      <div className="menu">
-        <button type="button" className="menu-title">Settings</button>
-        <div className="menu-dropdown" role="menu">
-          <button type="button" className="menu-item">
-            <span className="menu-label">Theme: dark</span>
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'view'}
+          onClick={() => toggleMenu('view')}
+          onMouseEnter={() => setOpenMenu('view')}
+        >
+          View
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'view' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onToggleSidePanel(); closeAll(); }}>
+            Side Panel<span className="gedit-shortcut">F9</span>
           </button>
-          <button type="button" className="menu-item">
-            <span className="menu-label">Font size: default</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onToggleBottomPanel(); closeAll(); }}>
+            Bottom Panel<span className="gedit-shortcut">F10</span>
           </button>
-          <button type="button" className="menu-item">
-            <span className="menu-label">Wrap lines</span>
+          <div className="gedit-menu-separator" />
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onToggleWrap(); closeAll(); }}>
+            Wrap Text<span className="gedit-shortcut">Ctrl+W</span>
+          </button>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onToggleLineNumbers(); closeAll(); }}>
+            Line Numbers<span className="gedit-shortcut">Ctrl+L</span>
           </button>
         </div>
-      </div>
 
-      <div className="menu">
-        <button type="button" className="menu-title">About</button>
-        <div className="menu-dropdown" role="menu">
-          <button type="button" className="menu-item menu-about">
-            <span className="menu-label">Web Editor</span>
-            <span className="menu-about-sub">
-              Multi-tab text editor · save & share via data URI · AES-GCM encryption
-            </span>
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'search'}
+          onClick={() => toggleMenu('search')}
+          onMouseEnter={() => setOpenMenu('search')}
+        >
+          Search
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'search' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onFind(); closeAll(); }}>
+            Find…<span className="gedit-shortcut">Ctrl+F</span>
           </button>
-          <div className="menu-separator" />
-          <button
-            type="button"
-            className="menu-item"
-            onClick={() => {
-              window.open('https://github.com/hermes98761234/web-editor', '_blank');
-            }}
-          >
-            <span className="menu-label">GitHub repo</span>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { closeAll(); }}>
+            Find and Replace…<span className="gedit-shortcut">Ctrl+H</span>
+          </button>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onGoToLine(); closeAll(); }}>
+            Go to Line<span className="gedit-shortcut">Ctrl+G</span>
           </button>
         </div>
-      </div>
-    </nav>
+
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'tools'}
+          onClick={() => toggleMenu('tools')}
+          onMouseEnter={() => setOpenMenu('tools')}
+        >
+          Tools
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'tools' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onEncrypt(); closeAll(); }}>
+            Encrypt Tab
+          </button>
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onDecrypt(); closeAll(); }}>
+            Decrypt Tab
+          </button>
+          <div className="gedit-menu-separator" />
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onPreferences(); closeAll(); }}>
+            Preferences…<span className="gedit-shortcut">Ctrl+P</span>
+          </button>
+        </div>
+
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'docs'}
+          onClick={() => toggleMenu('docs')}
+          onMouseEnter={() => setOpenMenu('docs')}
+        >
+          Documents
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'docs' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { closeAll(); }}>
+            Close Tab<span className="gedit-shortcut">Ctrl+W</span>
+          </button>
+        </div>
+
+        <button
+          className="gedit-menu-title"
+          aria-expanded={openMenu === 'help'}
+          onClick={() => toggleMenu('help')}
+          onMouseEnter={() => setOpenMenu('help')}
+        >
+          Help
+        </button>
+        <div className={`gedit-dropdown ${openMenu === 'help' ? 'gedit-dropdown-open' : ''}`} role="menu">
+          <button className="gedit-menu-item" role="menuitem" onClick={() => { props.onAbout(); closeAll(); }}>
+            About gedit-web
+          </button>
+        </div>
+      </nav>
+
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} onClick={closeAll} />
+    </>
   );
 }

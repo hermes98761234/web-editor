@@ -1,111 +1,708 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* Custom Gedit theme variables */
+@theme {
+  --color-gedit-bg: #f5f5f5;
+  --color-gedit-surface: #ffffff;
+  --color-gedit-border: #dcdcdc;
+  --color-gedit-hover: #e8e8e8;
+  --color-gedit-active: #d6d6d6;
+  --color-gedit-ink: #3c3c3c;
+  --color-gedit-ink-muted: #757575;
+  --color-gedit-accent: #069;
+  --color-gedit-accent-hover: #056;
+  --color-editor-bg: #ffffff;
+  --color-editor-gutter: #f0f0f0;
+  --color-editor-line-number: #a0a0a0;
+  --color-editor-current-line: #ffffcc;
+  --color-editor-selection: #b3d4fc;
+  --color-editor-bracket-match: #ffff00;
+  --color-sidebar-bg: #f0f0f0;
+  --color-sidebar-hover: #e0e0e0;
+  --color-sidebar-active: #d0d0d0;
+  --color-status-bg: #e8e8e8;
+  --color-toolbar-bg: #f0f0f0;
+  --color-menubar-bg: #f0f0f0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
 body {
-  margin: 0;
+  font-size: 13px;
+  color: var(--color-gedit-ink);
+  background: var(--color-gedit-bg);
+  overflow: hidden;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+* {
+  box-sizing: border-box;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.gedit-app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-gedit-bg);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+/* Menu Bar */
+.gedit-menubar {
+  display: flex;
+  gap: 0;
+  background: var(--color-menubar-bg);
+  border-bottom: 1px solid var(--color-gedit-border);
+  height: 24px;
+  user-select: none;
+}
+
+.gedit-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.gedit-menu-title {
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  padding: 0 0.5rem;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-gedit-ink);
+  font-size: 12px;
+  cursor: default;
+  outline: none;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
+.gedit-menu-title:hover {
+  background: var(--color-gedit-hover);
+  color: var(--color-gedit-accent);
+}
+
+.gedit-menu-title[aria-expanded="true"] {
+  background: var(--color-gedit-active);
+}
+
+.gedit-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
+  background: var(--color-gedit-surface);
+  border: 1px solid var(--color-gedit-border);
+  border-top: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 50;
+  margin: 0;
+  padding: 2px 0;
+  display: none;
+}
+
+.gedit-dropdown-open {
+  display: block;
+}
+
+.gedit-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 2px 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-gedit-ink);
+  font-size: 12px;
+  text-align: left;
+  cursor: default;
+}
+
+.gedit-menu-item:hover {
+  background: var(--color-gedit-accent);
+  color: white;
+}
+
+.gedit-menu-item .gedit-shortcut {
+  font-size: 11px;
+  color: var(--color-gedit-ink-muted);
+  margin-left: auto;
+}
+
+.gedit-menu-item:hover .gedit-shortcut {
+  color: rgba(255,255,255,0.8);
+}
+
+.gedit-menu-separator {
+  height: 1px;
+  background: var(--color-gedit-border);
+  margin: 4px 0;
+}
+
+.gedit-menu-item[disabled] {
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+}
+
+.gedit-menu-item[disabled]:hover {
+  background: transparent;
+  color: var(--color-gedit-ink-muted);
+}
+
+/* Toolbar */
+.gedit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--color-toolbar-bg);
+  border-bottom: 1px solid var(--color-gedit-border);
+  height: 32px;
+}
+
+.gedit-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+  font-size: 14px;
+}
+
+.gedit-toolbar-btn:hover {
+  background: var(--color-gedit-hover);
+  border-color: var(--color-gedit-border);
+  color: var(--color-gedit-ink);
+}
+
+.gedit-toolbar-btn:active {
+  background: var(--color-gedit-active);
+}
+
+.gedit-toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--color-gedit-border);
+  margin: 0 4px;
+}
+
+/* Main Layout */
+.gedit-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Side Panel */
+.gedit-side-panel {
+  width: 220px;
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-gedit-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gedit-side-panel-header {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-gedit-ink-muted);
+  border-bottom: 1px solid var(--color-gedit-border);
+  background: var(--color-gedit-bg);
+}
+
+.gedit-side-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.gedit-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 8px;
-  background: var(--code-bg);
+  border-radius: 2px;
+  cursor: default;
+  font-size: 12px;
+  color: var(--color-gedit-ink);
+}
+
+.gedit-file-item:hover {
+  background: var(--color-sidebar-hover);
+}
+
+.gedit-file-item.active {
+  background: var(--color-sidebar-active);
+}
+
+.gedit-file-item .gedit-file-icon {
+  font-size: 14px;
+}
+
+.gedit-file-item .gedit-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Editor Area */
+.gedit-editor-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: var(--color-editor-bg);
+}
+
+.gedit-tabs-bar {
+  display: flex;
+  border-bottom: 1px solid var(--color-gedit-border);
+  background: var(--color-gedit-bg);
+  height: 24px;
+  overflow-x: auto;
+}
+
+.gedit-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  background: var(--color-gedit-bg);
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+  white-space: nowrap;
+  font-size: 11px;
+  height: 24px;
+  margin-left: -4px;
+}
+
+.gedit-tab:hover {
+  background: var(--color-gedit-hover);
+  color: var(--color-gedit-ink);
+}
+
+.gedit-tab.active {
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-gedit-border);
+  border-bottom: 1px solid var(--color-editor-bg);
+  color: var(--color-gedit-ink);
+  font-weight: 500;
+  margin-bottom: -1px;
+}
+
+.gedit-tab.modified::after {
+  content: "●";
+  color: var(--color-gedit-accent);
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.gedit-tab-close {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: var(--color-gedit-ink-muted);
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.gedit-tab-close:hover {
+  background: #ff0000;
+  color: white;
+}
+
+.gedit-tab-spacer {
+  flex: 1;
+}
+
+.gedit-new-tab-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+  border-radius: 2px;
+  font-size: 14px;
+  margin: 2px;
+}
+
+.gedit-new-tab-btn:hover {
+  background: var(--color-gedit-hover);
+}
+
+/* Editor with line numbers */
+.gedit-editor-wrapper {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.gedit-line-numbers {
+  width: 48px;
+  background: var(--color-editor-gutter);
+  border-right: 1px solid var(--color-gedit-border);
+  color: var(--color-editor-line-number);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  user-select: none;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.gedit-line-number {
+  height: 1.6rem;
+  padding: 0 6px;
+  text-align: right;
+}
+
+.gedit-line-number.current {
+  color: var(--color-gedit-accent);
+  font-weight: 600;
+}
+
+.gedit-editor-textarea {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 1rem 1rem 1rem 0.5rem;
+  background: var(--color-editor-bg);
+  color: var(--color-gedit-ink);
+  border: none;
+  outline: none;
+  resize: none;
+  overflow: auto;
+  tab-size: 4;
+  white-space: pre;
+}
+
+.gedit-editor-textarea:focus {
+  outline: none;
+}
+
+.gedit-editor-textarea.wrap {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Bottom Panel */
+.gedit-bottom-panel {
+  height: 140px;
+  background: var(--color-gedit-bg);
+  border-top: 1px solid var(--color-gedit-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gedit-bottom-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--color-toolbar-bg);
+  border-bottom: 1px solid var(--color-gedit-border);
+  font-size: 11px;
+  color: var(--color-gedit-ink-muted);
+}
+
+.gedit-bottom-panel-tab {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  background: var(--color-gedit-bg);
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+  font-size: 11px;
+}
+
+.gedit-bottom-panel-tab.active {
+  background: var(--color-gedit-bg);
+  border: 1px solid var(--color-gedit-border);
+  border-bottom: 1px solid var(--color-gedit-bg);
+  color: var(--color-gedit-ink);
+  font-weight: 500;
+  margin-bottom: -1px;
+}
+
+.gedit-bottom-panel-content {
+  flex: 1;
+  padding: 8px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  color: var(--color-gedit-ink);
+  background: var(--color-editor-bg);
+}
+
+.gedit-bottom-panel-toggle {
+  height: 4px;
+  background: var(--color-gedit-border);
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gedit-ink-muted);
+  font-size: 10px;
+}
+
+/* Status Bar */
+.gedit-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 8px;
+  background: var(--color-status-bg);
+  border-top: 1px solid var(--color-gedit-border);
+  height: 20px;
+  font-size: 11px;
+  color: var(--color-gedit-ink-muted);
+}
+
+.gedit-status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gedit-status-separator {
+  width: 1px;
+  height: 12px;
+  background: var(--color-gedit-border);
+  margin: 0 8px;
+}
+
+.gedit-status-mode {
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--color-gedit-border);
+  color: var(--color-gedit-ink);
+  font-size: 10px;
+}
+
+/* Dialogs */
+.gedit-dialog-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.gedit-dialog {
+  background: var(--color-gedit-surface);
+  border: 1px solid var(--color-gedit-border);
+  border-radius: 4px;
+  padding: 16px;
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.gedit-dialog h2 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--color-gedit-ink);
+}
+
+.gedit-dialog p {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: var(--color-gedit-ink-muted);
+}
+
+.gedit-dialog-field {
+  margin-bottom: 12px;
+}
+
+.gedit-dialog-field label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-gedit-ink-muted);
+  margin-bottom: 4px;
+}
+
+.gedit-dialog-field input,
+.gedit-dialog-field textarea,
+.gedit-dialog-field select {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--color-gedit-border);
+  border-radius: 2px;
+  background: var(--color-gedit-surface);
+  color: var(--color-gedit-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.gedit-dialog-field input:focus,
+.gedit-dialog-field textarea:focus,
+.gedit-dialog-field select:focus {
+  outline: 2px solid var(--color-gedit-accent);
+  outline-offset: -2px;
+}
+
+.gedit-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.gedit-dialog-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--color-gedit-border);
+  border-radius: 2px;
+  background: var(--color-gedit-bg);
+  color: var(--color-gedit-ink);
+  font-size: 12px;
+  cursor: default;
+}
+
+.gedit-dialog-btn:hover {
+  background: var(--color-gedit-hover);
+  border-color: var(--color-gedit-border);
+}
+
+.gedit-dialog-btn.primary {
+  background: var(--color-gedit-accent);
+  color: white;
+  border-color: var(--color-gedit-accent);
+}
+
+.gedit-dialog-btn.primary:hover {
+  background: var(--color-gedit-accent-hover);
+}
+
+.gedit-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-gedit-ink);
+  cursor: default;
+}
+
+.gedit-checkbox input {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* Search bar in editor */
+.gedit-search-bar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-gedit-surface);
+  border: 1px solid var(--color-gedit-border);
+  border-radius: 2px;
+  padding: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.gedit-search-bar input {
+  padding: 2px 6px;
+  border: 1px solid var(--color-gedit-border);
+  border-radius: 2px;
+  background: var(--color-gedit-bg);
+  color: var(--color-gedit-ink);
+  font-size: 11px;
+  font-family: inherit;
+  width: 150px;
+}
+
+.gedit-search-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--color-gedit-ink-muted);
+  cursor: default;
+  border-radius: 2px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gedit-search-btn:hover {
+  background: var(--color-gedit-hover);
+}
+
+/* Syntax highlighting */
+.gedit-syntax-keyword { color: #0000ff; font-weight: bold; }
+.gedit-syntax-string { color: #a31515; }
+.gedit-syntax-comment { color: #008000; font-style: italic; }
+.gedit-syntax-function { color: #795e26; }
+.gedit-syntax-variable { color: #001080; }
+.gedit-syntax-tag { color: #800000; }
+.gedit-syntax-attr { color: #ff0000; }
+.gedit-syntax-value { color: #0000ff; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gedit-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b8b8b8;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* Focus styles */
+.gedit-menu-item:focus,
+.gedit-toolbar-btn:focus,
+.gedit-tab:focus,
+.gedit-dialog-btn:focus,
+.gedit-search-btn:focus {
+  outline: 2px solid var(--color-gedit-accent);
+  outline-offset: -2px;
+}
+
+/* Selection highlight */
+.gedit-editor-textarea::selection {
+  background: var(--color-editor-selection);
 }

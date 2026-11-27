@@ -1,6 +1,6 @@
 /**
- * Component: TabsBar
- * Tab strip for switching between editor tabs.
+ * Component: TabsBar (UI layer)
+ * Gedit-style tab bar for open files
  */
 
 import type { TabData } from '../../domain/value-objects/Workspace';
@@ -10,38 +10,38 @@ interface TabsBarProps {
   activeIndex: number;
   onSwitch: (index: number) => void;
   onClose: (index: number) => void;
+  onNewTab: () => void;
 }
 
 export function TabsBar(props: TabsBarProps) {
+  const handleTabClose = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    props.onClose(index);
+  };
+
   return (
-    <div className="tabs-bar" role="tablist" aria-label="Editor tabs">
-      <div id="tab-list">
-        {props.tabs.map((t, i) => (
+    <div className="gedit-tabs-bar">
+      {props.tabs.map((tab, i) => (
+        <div
+          key={tab.id}
+          className={`gedit-tab ${i === props.activeIndex ? 'active' : ''} ${tab.content.trim().length > 0 ? 'modified' : ''}`}
+          onClick={() => props.onSwitch(i)}
+          title={tab.name}
+        >
+          {tab.encrypted ? '🔒 ' : ''}{tab.name}
           <button
-            key={t.id}
-            type="button"
-            className={`tab ${i === props.activeIndex ? 'active' : ''} ${
-              t.encrypted ? 'tab-encrypted' : ''
-            }`}
-            onClick={() => props.onSwitch(i)}
+            className="gedit-tab-close"
+            onClick={(e) => handleTabClose(e, i)}
+            aria-label={`Close ${tab.name}`}
           >
-            <span className="tab-name">{t.name}</span>
-            {t.encrypted && <span className="tab-lock" title="Encrypted tab">Enc</span>}
-            <button
-              type="button"
-              className="tab-close"
-              aria-label="Close tab"
-              onClick={(e) => {
-                e.stopPropagation();
-                props.onClose(i);
-              }}
-            >
-              ×
-            </button>
+            ×
           </button>
-        ))}
-      </div>
-      <div className="tabs-spacer" />
+        </div>
+      ))}
+      <div className="gedit-tab-spacer" />
+      <button className="gedit-new-tab-btn" title="New Document" onClick={props.onNewTab}>
+        +
+      </button>
     </div>
   );
 }
