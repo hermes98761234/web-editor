@@ -286,7 +286,7 @@ export default function App() {
               onClick={() => switchTab(i)}
             >
               <span className="tab-name">{escapeHtml(t.name)}</span>
-              {t.encrypted && <span className="lock">🔒</span>}
+              {t.encrypted && <span className="tab-lock" title="Encrypted tab">Enc</span>}
               <button
                 type="button"
                 className="tab-close"
@@ -320,6 +320,10 @@ export default function App() {
         <span className="divider">|</span>
         <span className="tab-info">
           Tab {activeIndex + 1} of {tabs.length}
+        </span>
+        <span className="divider">|</span>
+        <span className="word-count">
+          {activeTab.content.trim().split(/\s+/).filter(Boolean).length} words
         </span>
         {activeTab.encrypted && <span className="badge">Encrypted</span>}
       </footer>
