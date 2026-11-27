@@ -201,7 +201,9 @@ export function Menubar(props: MenubarProps) {
         </div>
       </nav>
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} onClick={closeAll} />
+      {openMenu !== null && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }} onClick={closeAll} />
+      )}
     </>
   );
 }
