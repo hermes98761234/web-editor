@@ -48,15 +48,8 @@ export default function App() {
     });
   }, []);
 
-  if (!initialized) {
-    return (
-      <div className="app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div className="status-text">{status}</div>
-      </div>
-    );
-  }
-
-  const activeTab = app.getActiveTab();
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const activeTab = initialized ? app.getActiveTab() : { content: '', encrypted: false };
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
 
   const handleContentChange = useCallback((content: string) => {
@@ -118,6 +111,14 @@ export default function App() {
       setPwdOpen(true);
       (window as any).__pwdResolve = resolve;
     });
+  }
+
+  if (!initialized) {
+    return (
+      <div className="app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="status-text">{status}</div>
+      </div>
+    );
   }
 
   return (
