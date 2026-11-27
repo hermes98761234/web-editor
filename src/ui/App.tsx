@@ -188,6 +188,12 @@ export default function App() {
       el.selectionEnd = start + replaceText.length;
       app.setActiveContent(newValue);
       el.dispatchEvent(new Event('input', { bubbles: true }));
+      setUndoStack((prev) => {
+        const next = prev.slice(0, undoIndex + 1);
+        next.push(newValue);
+        return next;
+      });
+      setUndoIndex((prev) => prev + 1);
     } else {
       handleFindNext(searchText);
     }
@@ -203,9 +209,15 @@ export default function App() {
       el.value = newValue;
       app.setActiveContent(newValue);
       el.dispatchEvent(new Event('input', { bubbles: true }));
+      setUndoStack((prev) => {
+        const next = prev.slice(0, undoIndex + 1);
+        next.push(newValue);
+        return next;
+      });
+      setUndoIndex((prev) => prev + 1);
       setStatus(`Replaced all occurrences of "${searchText}"`);
     }
-  }, [app]);
+  }, [app, undoIndex]);
 
   const handleUndo = useCallback(() => {
     if (undoIndex > 0) {
@@ -245,7 +257,13 @@ export default function App() {
     el.selectionEnd = start;
     app.setActiveContent(newValue);
     el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, [app]);
+    setUndoStack((prev) => {
+      const next = prev.slice(0, undoIndex + 1);
+      next.push(newValue);
+      return next;
+    });
+    setUndoIndex((prev) => prev + 1);
+  }, [app, undoIndex]);
 
   const handleCopy = useCallback(() => {
     const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
@@ -268,7 +286,13 @@ export default function App() {
     el.selectionEnd = start + text.length;
     app.setActiveContent(newValue);
     el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, [app]);
+    setUndoStack((prev) => {
+      const next = prev.slice(0, undoIndex + 1);
+      next.push(newValue);
+      return next;
+    });
+    setUndoIndex((prev) => prev + 1);
+  }, [app, undoIndex]);
 
   const handleSelectAll = useCallback(() => {
     const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
