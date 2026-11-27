@@ -1,6 +1,7 @@
 /**
  * Component: Editor (UI layer)
- * Gedit-style editor - pure presentational, no hooks
+ * Pure presentational editor — zero hooks, all state managed by App.
+ * Renders textarea with line numbers gutter.
  */
 
 interface EditorProps {
@@ -12,16 +13,24 @@ interface EditorProps {
   fontSize: number;
   tabWidth: number;
   fontFamily: string;
-  onFind: () => void;
-  findText: string;
-  onFindTextChange: (text: string) => void;
-  onFindNext: (searchText: string) => void;
-  onCursorChange?: (line: number, col: number) => void;
 }
 
 export function Editor(props: EditorProps) {
+  const lineNumbers = props.showLineNumbers
+    ? Array.from({ length: props.content.split('\n').length }, (_, i) => i + 1)
+    : [];
+
   return (
     <div className="gedit-editor-wrapper">
+      {props.showLineNumbers && (
+        <div className="gedit-line-numbers">
+          {lineNumbers.map((n) => (
+            <div key={n} className="gedit-line-number">
+              {n}
+            </div>
+          ))}
+        </div>
+      )}
       <textarea
         id="gedit-editor"
         className={`gedit-editor-textarea ${props.wrapText ? 'wrap' : ''}`}
