@@ -1,9 +1,9 @@
 /**
  * Component: Editor (UI layer)
- * Gedit-style editor
+ * Gedit-style editor with line numbers, search bar, find with selection
  */
 
-import { useRef, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 
 interface EditorProps {
   content: string;
@@ -23,6 +23,7 @@ interface EditorProps {
 
 export function Editor(props: EditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const [searchVisible, setSearchVisible] = useState(false);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -40,8 +41,13 @@ export function Editor(props: EditorProps) {
         e.currentTarget.selectionEnd = start + spaces.length;
         props.onChange(newValue);
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setSearchVisible(true);
+        props.onFind();
+      }
     },
-    [props.tabWidth, props.onChange]
+    [props.tabWidth, props.onChange, props.onFind]
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -54,6 +60,29 @@ export function Editor(props: EditorProps) {
 
   return (
     <div className="gedit-editor-wrapper">
+      {searchVisible && (
+        <div className="gedit-search-bar">
+          <label style={{ fontSize: '11px', color: '#757575', marginRight: 4 }}>
+            Find:
+          </label>
+          <input
+            value={props.findText}
+            onChange={(e) => props.onFindTextChange(e.currentTarget.value)}
+            placeholder="Find…"
+            autoFocus
+          />
+          <button
+            className="gedit-search-btn"
+            title="Find Next"
+            onClick={() => props.onFindNext(props.findText)}
+          >
+            ↓
+          </button>
+          <button className="gedit-search-btn" title="Close" onClick={() => setSearchVisible(false)}>
+            ✕
+          </button>
+        </div>
+      )}
       {props.showLineNumbers && (
         <div className="gedit-line-numbers">
           {lineNumbers.map((n) => (
