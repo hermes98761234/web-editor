@@ -1,0 +1,5 @@
+.DS_Thumbs
+Thumbs.db
+*.log
+node_modules/
+dist/

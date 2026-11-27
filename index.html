@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Web Editor — Multi-tab Text Editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <div class="brand">Web Editor</div>
+      <div class="toolbar-right">
+        <button id="btn-new" title="New tab">+ New</button>
+        <button id="btn-share" title="Share as link (data URI)">Share</button>
+        <button id="btn-import" title="Import from link">Import</button>
+        <button id="btn-encrypt" title="Encrypt current tab">Encrypt</button>
+        <button id="btn-decrypt" title="Decrypt current tab">Decrypt</button>
+      </div>
+    </header>
+
+    <div class="tabs-bar" role="tablist" aria-label="Editor tabs">
+      <div id="tab-list"></div>
+      <div class="tabs-spacer"></div>
+    </div>
+
+    <div class="editor-area">
+      <textarea id="editor" spellcheck="false" wrap="soft" aria-label="File content"></textarea>
+    </div>
+
+    <footer class="status-bar">
+      <span id="status">Ready</span>
+      <span id="tab-info" class="divider">Tab 1 of 1</span>
+      <span id="encrypt-badge" class="badge hidden">Encrypted</span>
+    </footer>
+
+    <!-- Import dialog -->
+    <dialog id="dlg-import">
+      <form method="dialog">
+        <h3>Import from link</h3>
+        <p>Paste a data: URI or encrypted share link:</p>
+        <textarea id="import-input" rows="4"></textarea>
+        <div class="dlg-actions">
+          <button type="button" id="dlg-cancel">Cancel</button>
+          <button type="submit" id="dlg-ok">Import</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Password dialog -->
+    <dialog id="dlg-password">
+      <form method="dialog">
+        <h3 id="pwd-title">Enter password</h3>
+        <input type="password" id="pwd-input" placeholder="Password" />
+        <div class="dlg-actions">
+          <button type="button" id="pwd-cancel">Cancel</button>
+          <button type="submit" id="pwd-ok">OK</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

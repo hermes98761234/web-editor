@@ -1,0 +1,179 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --border: #334155;
+  --danger: #f87171;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+html, body { height: 100%; }
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.app { height: 100%; display: flex; flex-direction: column; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+}
+
+.toolbar-right { display: flex; gap: 0.4rem; }
+
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+button:hover { background: #475569; border-color: var(--accent); }
+button:active { transform: translateY(1px); }
+button.secondary { background: transparent; }
+
+.tabs-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
+  background: var(--surface);
+}
+
+.tabs-spacer { flex: 1 1 100%; min-width: 0; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  user-select: none;
+}
+.tab:hover { background: #334155; color: var(--text); }
+.tab.active {
+  background: var(--bg);
+  border-color: var(--border);
+  border-bottom: 1px solid var(--bg);
+  color: var(--text);
+  font-weight: 600;
+}
+.tab .tab-close {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  cursor: pointer;
+}
+.tab .tab-close:hover { color: var(--danger); }
+.tab.modified::after {
+  content: "•";
+  color: var(--accent);
+  font-size: 0.7rem;
+  position: relative;
+  top: -2px;
+}
+
+.editor-area {
+  flex: 1;
+  position: relative;
+}
+
+#editor {
+  width: 100%;
+  height: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 1rem;
+  background: var(--bg);
+  color: var(--text);
+  border: none;
+  outline: none;
+  resize: none;
+  overflow: auto;
+  transition: background 0.2s, color 0.2s;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.divider { opacity: 0.6; }
+.badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+.badge.hidden { display: none; }
+
+dialog {
+  border: none;
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  max-width: 480px;
+  width: 90vw;
+}
+dialog::backdrop { background: rgba(0,0,0,0.6); }
+dialog h3 { margin-bottom: 0.75rem; color: var(--accent); }
+dialog p { margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem; }
+dialog textarea { width: 100%; height: 90px; font-family: inherit; font-size: 0.9rem; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); resize: vertical; }
+dialog input { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 0.95rem; margin-bottom: 1rem; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.dlg-actions button { padding: 0.4rem 0.9rem; }
+
+@media (max-width: 640px) {
+  .toolbar-right { gap: 0.25rem; }
+  .toolbar-right button { padding: 0.4rem 0.5rem; font-size: 0.8rem; }
+}
