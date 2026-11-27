@@ -1,9 +1,9 @@
 /**
  * Component: Editor (UI layer)
- * Gedit-style editor with line numbers, search bar, find with selection
+ * Gedit-style editor
  */
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface EditorProps {
   content: string;
@@ -23,7 +23,6 @@ interface EditorProps {
 
 export function Editor(props: EditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [searchVisible, setSearchVisible] = useState(false);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -41,58 +40,13 @@ export function Editor(props: EditorProps) {
         e.currentTarget.selectionEnd = start + spaces.length;
         props.onChange(newValue);
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        setSearchVisible(true);
-        props.onFind();
-      }
-      if (props.onCursorChange) {
-        const start = e.currentTarget.selectionStart;
-        const textBefore = e.currentTarget.value.slice(0, start);
-        const line = textBefore.split('\n').length;
-        const col = textBefore.split('\n').pop()!.length + 1;
-        props.onCursorChange(line, col);
-      }
     },
-    [props.tabWidth, props.onChange, props.onFind, props.onCursorChange]
+    [props.tabWidth, props.onChange]
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     props.onChange(e.currentTarget.value);
-    if (props.onCursorChange) {
-      const start = e.currentTarget.selectionStart;
-      const textBefore = e.currentTarget.value.slice(0, start);
-      const line = textBefore.split('\n').length;
-      const col = textBefore.split('\n').pop()!.length + 1;
-      props.onCursorChange(line, col);
-    }
   };
-
-  const handleClick = useCallback(() => {
-    if (props.onCursorChange && editorRef.current) {
-      const start = editorRef.current.selectionStart;
-      const textBefore = editorRef.current.value.slice(0, start);
-      const line = textBefore.split('\n').length;
-      const col = textBefore.split('\n').pop()!.length + 1;
-      props.onCursorChange(line, col);
-    }
-  }, [props.onCursorChange]);
-
-  const handleSelect = useCallback(() => {
-    if (props.onCursorChange && editorRef.current) {
-      const start = editorRef.current.selectionStart;
-      const textBefore = editorRef.current.value.slice(0, start);
-      const line = textBefore.split('\n').length;
-      const col = textBefore.split('\n').pop()!.length + 1;
-      props.onCursorChange(line, col);
-    }
-  }, [props.onCursorChange]);
-
-  const handleFindNext = useCallback(() => {
-    if (props.findText) {
-      props.onFindNext(props.findText);
-    }
-  }, [props.findText, props.onFindNext]);
 
   const lineNumbers = props.showLineNumbers
     ? Array.from({ length: props.content.split('\n').length }, (_, i) => i + 1)
@@ -100,29 +54,6 @@ export function Editor(props: EditorProps) {
 
   return (
     <div className="gedit-editor-wrapper">
-      {searchVisible && (
-        <div className="gedit-search-bar">
-          <label style={{ fontSize: '11px', color: '#757575', marginRight: 4 }}>
-            Find:
-          </label>
-          <input
-            value={props.findText}
-            onChange={(e) => props.onFindTextChange(e.currentTarget.value)}
-            placeholder="Find…"
-            autoFocus
-          />
-          <button
-            className="gedit-search-btn"
-            title="Find Next"
-            onClick={handleFindNext}
-          >
-            ↓
-          </button>
-          <button className="gedit-search-btn" title="Close" onClick={() => setSearchVisible(false)}>
-            ✕
-          </button>
-        </div>
-      )}
       {props.showLineNumbers && (
         <div className="gedit-line-numbers">
           {lineNumbers.map((n) => (
@@ -139,8 +70,6 @@ export function Editor(props: EditorProps) {
         value={props.content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onClick={handleClick}
-        onSelect={handleSelect}
         spellCheck={false}
         readOnly={props.encrypted}
         placeholder={props.encrypted ? 'Tab is encrypted. Decrypt to edit.' : ''}
