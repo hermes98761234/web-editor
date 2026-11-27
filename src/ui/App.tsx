@@ -60,15 +60,8 @@ export default function App() {
     });
   }, []);
 
-  if (!initialized) {
-    return (
-      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div className="gedit-status-item">{status}</div>
-      </div>
-    );
-  }
-
-  const activeTab = app.getActiveTab();
+  // ALL hooks must be called before any conditional return (Rules of Hooks)
+  const activeTab = initialized ? app.getActiveTab() : { content: '', encrypted: false };
   const workspace = app.getWorkspace();
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
   const lines = activeTab.content.split('\n').length;
@@ -221,6 +214,14 @@ export default function App() {
     setPreferencesOpen(false);
     setStatus('Preferences saved');
   }, []);
+
+  if (!initialized) {
+    return (
+      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="gedit-status-item">{status}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="gedit-app">
