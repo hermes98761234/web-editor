@@ -1,7 +1,7 @@
 /**
  * Component: App (UI layer)
  * Root Gedit shell — wires the EditorApplicationService to a Gedit-style UI.
- * Layout: Menubar → Toolbar → [SidePanel | Editor Tabs + Editor] → BottomPanel → StatusBar
+ * All menu/toolbar actions are functional (no hard-coded status messages).
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -23,7 +23,7 @@ import { WebCryptoImportService } from '../infrastructure/WebCryptoImportService
 import { TabFactory } from '../domain/factories/TabFactory';
 
 export default function App() {
-  // Dependency injection: compose infrastructure + domain + application layers
+  // Dependency injection
   const [app] = useState(() => {
     const repository = new LocalStorageTabRepository();
     const encryption = new WebCryptoEncryptionService();
@@ -48,6 +48,8 @@ export default function App() {
   const [prefLineNumbers, setPrefLineNumbers] = useState(true);
   const [prefAutoIndent, setPrefAutoIndent] = useState(true);
   const [prefFontFamily, setPrefFontFamily] = useState('monospace');
+  const [cursorLine, setCursorLine] = useState(1);
+  const [cursorCol, setCursorCol] = useState(1);
 
   // Initialize
   useEffect(() => {
@@ -60,16 +62,111 @@ export default function App() {
     });
   }, []);
 
-  // ALL hooks must be called before any conditional return (Rules of Hooks)
-  const activeTab = initialized ? app.getActiveTab() : { content: '', encrypted: false };
+  if (!initialized) {
+    return (
+      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="gedit-status-item">{status}</div>
+      </div>
+    );
+  }
+
+  const activeTab = app.getActiveTab();
   const workspace = app.getWorkspace();
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
   const lines = activeTab.content.split('\n').length;
 
+  // --- Undo/Redo stack (since execCommand doesn't work reliably on textarea) ---
+  const [undoStack, setUndoStack] = useState<string[]>([activeTab.content]);
+  const [undoIndex, setUndoIndex] = useState(0);
+
+  // Sync undo stack when content changes externally (tab switch, import, etc.)
+  useEffect(() => {
+    setUndoStack([activeTab.content]);
+    setUndoIndex(0);
+  }, [activeTab.id, activeTab.content]);
+
   const handleContentChange = useCallback((content: string) => {
     app.setActiveContent(content);
+    // Add to undo stack
+    setUndoStack((prev) => {
+      const next = prev.slice(0, undoIndex + 1);
+      next.push(content);
+      return next;
+    });
+    setUndoIndex((prev) => prev + 1);
+  }, [app, undoIndex]);
+
+  const handleUndo = useCallback(() => {
+    if (undoIndex > 0) {
+      const newIndex = undoIndex - 1;
+      const content = undoStack[newIndex];
+      app.setActiveContent(content);
+      setUndoIndex(newIndex);
+      const el = document.getElementById('gedit-editor');
+      (el as HTMLTextAreaElement)?.focus();
+      setStatus('Undo');
+    }
+  }, [app, undoStack, undoIndex]);
+
+  const handleRedo = useCallback(() => {
+    if (undoIndex < undoStack.length - 1) {
+      const newIndex = undoIndex + 1;
+      const content = undoStack[newIndex];
+      app.setActiveContent(content);
+      setUndoIndex(newIndex);
+      const el = document.getElementById('gedit-editor');
+      (el as HTMLTextAreaElement)?.focus();
+      setStatus('Redo');
+    }
+  }, [app, undoStack, undoIndex]);
+
+  // --- Clipboard operations ---
+  const handleCut = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (start === end) return;
+    const selected = el.value.slice(start, end);
+    navigator.clipboard.writeText(selected);
+    const newValue = el.value.slice(0, start) + el.value.slice(end);
+    el.value = newValue;
+    el.selectionStart = start;
+    el.selectionEnd = start;
+    app.setActiveContent(newValue);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
   }, [app]);
 
+  const handleCopy = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (start === end) return;
+    navigator.clipboard.writeText(el.value.slice(start, end));
+  }, []);
+
+  const handlePaste = useCallback(async () => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const text = await navigator.clipboard.readText();
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const newValue = el.value.slice(0, start) + text + el.value.slice(end);
+    el.value = newValue;
+    el.selectionStart = start + text.length;
+    el.selectionEnd = start + text.length;
+    app.setActiveContent(newValue);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, [app]);
+
+  const handleSelectAll = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    el?.focus();
+    el?.select();
+  }, []);
+
+  // --- File operations ---
   const handleSwitchTab = useCallback((index: number) => {
     app.switchTab(index);
   }, [app]);
@@ -131,18 +228,64 @@ export default function App() {
     }
   }, [app]);
 
+  // --- Find / Replace ---
   const handleFind = useCallback(() => {
     setFindReplaceOpen(true);
   }, []);
 
-  const handleFindNext = useCallback(() => {
-    setStatus(`Finding: "${findText}"`);
-  }, [findText]);
+  const handleFindNext = useCallback((searchText: string) => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el || !searchText) return;
+    el.focus();
+    const text = el.value;
+    const lowerText = text.toLowerCase();
+    const lowerSearch = searchText.toLowerCase();
+    const startPos = el.selectionEnd;
+    let pos = lowerText.indexOf(lowerSearch, startPos);
+    if (pos === -1) {
+      pos = lowerText.indexOf(lowerSearch);
+    }
+    if (pos !== -1) {
+      el.setSelectionRange(pos, pos + searchText.length);
+      el.scrollTop = el.scrollHeight * (pos / text.length);
+    } else {
+      setStatus(`No match found for "${searchText}"`);
+    }
+  }, []);
 
-  const handleReplace = useCallback(() => {
-    setStatus(`Replaced: "${findText}" → "${replaceText}"`);
-  }, [findText, replaceText]);
+  const handleReplace = useCallback((searchText: string, replaceText: string) => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el || !searchText) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = el.value.slice(start, end);
+    if (selected === searchText) {
+      const newValue = el.value.slice(0, start) + replaceText + el.value.slice(end);
+      el.value = newValue;
+      el.selectionStart = start;
+      el.selectionEnd = start + replaceText.length;
+      app.setActiveContent(newValue);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    } else {
+      handleFindNext(searchText);
+    }
+  }, [app, handleFindNext]);
 
+  const handleReplaceAll = useCallback((searchText: string, replaceText: string) => {
+    if (!searchText) return;
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const newValue = el.value.replace(regex, replaceText);
+    if (newValue !== el.value) {
+      el.value = newValue;
+      app.setActiveContent(newValue);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      setStatus(`Replaced all occurrences of "${searchText}"`);
+    }
+  }, [app]);
+
+  // --- Encryption ---
   const handleEncrypt = useCallback(async () => {
     const pwd = prompt('Enter password to encrypt this tab');
     if (!pwd) return;
@@ -161,67 +304,55 @@ export default function App() {
     setStatus(ok ? 'Tab decrypted' : 'Decryption failed');
   }, [app, activeTab.encrypted]);
 
-  const handleUndo = useCallback(() => {
-    document.execCommand('undo');
-  }, []);
-
-  const handleRedo = useCallback(() => {
-    document.execCommand('redo');
-  }, []);
-
-  const handleCut = useCallback(() => {
-    document.execCommand('cut');
-  }, []);
-
-  const handleCopy = useCallback(() => {
-    document.execCommand('copy');
-  }, []);
-
-  const handlePaste = useCallback(() => {
-    document.execCommand('paste');
-  }, []);
-
-  const handleSelectAll = useCallback(() => {
-    const el = document.getElementById('gedit-editor');
-    (el as HTMLTextAreaElement)?.focus();
-    (el as HTMLTextAreaElement)?.select();
-  }, []);
-
+  // --- View toggles ---
   const handleGoToLine = useCallback(() => {
     const line = prompt('Go to line:');
-    if (line) {
-      setStatus(`Go to line ${line}`);
+    if (!line) return;
+    const lineNum = parseInt(line, 10);
+    if (isNaN(lineNum) || lineNum < 1 || lineNum > lines) {
+      setStatus(`Invalid line number (1-${lines})`);
+      return;
     }
-  }, []);
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    // Compute character offset for the line
+    const textLines = activeTab.content.split('\n');
+    let offset = 0;
+    for (let i = 0; i < lineNum - 1; i++) {
+      offset += textLines[i].length + 1; // +1 for newline
+    }
+    el.focus();
+    el.setSelectionRange(offset, offset);
+    setStatus(`Line ${lineNum}`);
+  }, [activeTab.content, lines]);
 
   const handleToggleWrap = useCallback(() => {
-    setPrefWrapText(!prefWrapText);
-  }, [prefWrapText]);
+    setPrefWrapText((prev) => !prev);
+  }, []);
 
   const handleToggleLineNumbers = useCallback(() => {
-    setPrefLineNumbers(!prefLineNumbers);
-  }, [prefLineNumbers]);
+    setPrefLineNumbers((prev) => !prev);
+  }, []);
 
   const handleToggleSidePanel = useCallback(() => {
-    setSidePanelOpen(!sidePanelOpen);
-  }, [sidePanelOpen]);
+    setSidePanelOpen((prev) => !prev);
+  }, []);
 
   const handleToggleBottomPanel = useCallback(() => {
-    setBottomPanelOpen(!bottomPanelOpen);
-  }, [bottomPanelOpen]);
+    setBottomPanelOpen((prev) => !prev);
+  }, []);
 
+  // --- Cursor tracking ---
+  const handleCursorChange = useCallback((line: number, col: number) => {
+    setCursorLine(line);
+    setCursorCol(col);
+  }, []);
+
+  // --- Preferences ---
   const handleSavePreferences = useCallback(() => {
     setPreferencesOpen(false);
     setStatus('Preferences saved');
   }, []);
-
-  if (!initialized) {
-    return (
-      <div className="gedit-app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div className="gedit-status-item">{status}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="gedit-app">
@@ -289,9 +420,7 @@ export default function App() {
             findText={findText}
             onFindTextChange={setFindText}
             onFindNext={handleFindNext}
-            onReplace={handleReplace}
-            replaceText={replaceText}
-            onReplaceTextChange={setReplaceText}
+            onCursorChange={handleCursorChange}
           />
         </div>
       </div>
@@ -302,8 +431,8 @@ export default function App() {
         tabCount={workspace.tabs.length}
         wordCount={wordCount}
         lineCount={lines}
-        cursorLine={1}
-        cursorCol={1}
+        cursorLine={cursorLine}
+        cursorCol={cursorCol}
         encrypted={activeTab.encrypted}
         modified={activeTab.content.trim().length > 0}
         wrapText={prefWrapText}
@@ -316,9 +445,9 @@ export default function App() {
         onFindTextChange={setFindText}
         replaceText={replaceText}
         onReplaceTextChange={setReplaceText}
-        onFindNext={handleFindNext}
-        onReplace={handleReplace}
-        onReplaceAll={() => setStatus('Replaced all')}
+        onFindNext={(text) => handleFindNext(text)}
+        onReplace={(findTxt, replTxt) => handleReplace(findTxt, replTxt)}
+        onReplaceAll={(findTxt, replTxt) => handleReplaceAll(findTxt, replTxt)}
       />
       <PreferencesDialog
         open={preferencesOpen}

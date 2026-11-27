@@ -10,9 +10,9 @@ interface FindReplaceDialogProps {
   onFindTextChange: (text: string) => void;
   replaceText: string;
   onReplaceTextChange: (text: string) => void;
-  onFindNext: () => void;
-  onReplace: () => void;
-  onReplaceAll: () => void;
+  onFindNext: (searchText: string) => void;
+  onReplace: (findText: string, replaceText: string) => void;
+  onReplaceAll: (findText: string, replaceText: string) => void;
 }
 
 export function FindReplaceDialog(props: FindReplaceDialogProps) {
@@ -41,13 +41,13 @@ export function FindReplaceDialog(props: FindReplaceDialogProps) {
           <button className="gedit-dialog-btn" onClick={props.onClose}>
             Close
           </button>
-          <button className="gedit-dialog-btn" onClick={props.onFindNext}>
+          <button className="gedit-dialog-btn" onClick={() => props.onFindNext(props.findText)}>
             Find Next
           </button>
-          <button className="gedit-dialog-btn" onClick={props.onReplace}>
+          <button className="gedit-dialog-btn" onClick={() => props.onReplace(props.findText, props.replaceText)}>
             Replace
           </button>
-          <button className="gedit-dialog-btn primary" onClick={props.onReplaceAll}>
+          <button className="gedit-dialog-btn primary" onClick={() => props.onReplaceAll(props.findText, props.replaceText)}>
             Replace All
           </button>
         </div>
