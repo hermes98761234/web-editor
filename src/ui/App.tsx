@@ -54,6 +54,13 @@ export default function App() {
   const [undoStack, setUndoStack] = useState<string[]>(['']);
   const [undoIndex, setUndoIndex] = useState(0);
 
+  // Revision counter that increments whenever tabs change,
+  // forcing App to re-render and pick up new tab state from the service
+  const [tabRevision, setTabRevision] = useState(0);
+  // tabRevision is intentionally unread — its purpose is to force re-render
+  // whenever tabs change so App picks up new tab state from the service
+  void tabRevision;
+
   // All useEffect hooks (before any conditional return)
   useEffect(() => {
     app.initialize().then(() => {
@@ -92,18 +99,22 @@ export default function App() {
 
   const handleSwitchTab = useCallback((index: number) => {
     app.switchTab(index);
+    setTabRevision((prev) => prev + 1);
   }, [app]);
 
   const handleCloseTab = useCallback((index: number) => {
     app.closeTab(index);
+    setTabRevision((prev) => prev + 1);
   }, [app]);
 
   const handleNewTab = useCallback(() => {
     app.newTab();
+    setTabRevision((prev) => prev + 1);
   }, [app]);
 
   const handleNewDocument = useCallback(() => {
     app.newTab();
+    setTabRevision((prev) => prev + 1);
   }, [app]);
 
   const handleOpenFile = useCallback(() => {
@@ -117,6 +128,7 @@ export default function App() {
         reader.onload = (ev) => {
           const content = ev.target?.result as string;
           app.openFile(file.name, content);
+          setTabRevision((prev) => prev + 1);
         };
         reader.readAsText(file);
       }
