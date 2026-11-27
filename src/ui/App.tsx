@@ -2,6 +2,7 @@
  * Component: App (UI layer)
  * Root Gedit shell — wires the EditorApplicationService to a Gedit-style UI.
  * All menu/toolbar actions are functional (no hard-coded status messages).
+ * All React hooks are called before any conditional return (Rules of Hooks).
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -51,6 +52,10 @@ export default function App() {
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorCol, setCursorCol] = useState(1);
 
+  // Undo/Redo stack — hooks must be before any conditional return
+  const [undoStack, setUndoStack] = useState<string[]>(['']);
+  const [undoIndex, setUndoIndex] = useState(0);
+
   // Initialize
   useEffect(() => {
     app.initialize().then(() => {
@@ -61,6 +66,14 @@ export default function App() {
       setStatus('Init failed');
     });
   }, []);
+
+  // Sync undo stack when tab/content changes externally
+  useEffect(() => {
+    if (!initialized) return;
+    const content = app.getActiveTab().content;
+    setUndoStack([content]);
+    setUndoIndex(0);
+  }, [app, initialized]);
 
   if (!initialized) {
     return (
@@ -75,19 +88,8 @@ export default function App() {
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
   const lines = activeTab.content.split('\n').length;
 
-  // --- Undo/Redo stack (since execCommand doesn't work reliably on textarea) ---
-  const [undoStack, setUndoStack] = useState<string[]>([activeTab.content]);
-  const [undoIndex, setUndoIndex] = useState(0);
-
-  // Sync undo stack when content changes externally (tab switch, import, etc.)
-  useEffect(() => {
-    setUndoStack([activeTab.content]);
-    setUndoIndex(0);
-  }, [activeTab.id, activeTab.content]);
-
   const handleContentChange = useCallback((content: string) => {
     app.setActiveContent(content);
-    // Add to undo stack
     setUndoStack((prev) => {
       const next = prev.slice(0, undoIndex + 1);
       next.push(content);
@@ -96,77 +98,6 @@ export default function App() {
     setUndoIndex((prev) => prev + 1);
   }, [app, undoIndex]);
 
-  const handleUndo = useCallback(() => {
-    if (undoIndex > 0) {
-      const newIndex = undoIndex - 1;
-      const content = undoStack[newIndex];
-      app.setActiveContent(content);
-      setUndoIndex(newIndex);
-      const el = document.getElementById('gedit-editor');
-      (el as HTMLTextAreaElement)?.focus();
-      setStatus('Undo');
-    }
-  }, [app, undoStack, undoIndex]);
-
-  const handleRedo = useCallback(() => {
-    if (undoIndex < undoStack.length - 1) {
-      const newIndex = undoIndex + 1;
-      const content = undoStack[newIndex];
-      app.setActiveContent(content);
-      setUndoIndex(newIndex);
-      const el = document.getElementById('gedit-editor');
-      (el as HTMLTextAreaElement)?.focus();
-      setStatus('Redo');
-    }
-  }, [app, undoStack, undoIndex]);
-
-  // --- Clipboard operations ---
-  const handleCut = useCallback(() => {
-    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    if (start === end) return;
-    const selected = el.value.slice(start, end);
-    navigator.clipboard.writeText(selected);
-    const newValue = el.value.slice(0, start) + el.value.slice(end);
-    el.value = newValue;
-    el.selectionStart = start;
-    el.selectionEnd = start;
-    app.setActiveContent(newValue);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, [app]);
-
-  const handleCopy = useCallback(() => {
-    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    if (start === end) return;
-    navigator.clipboard.writeText(el.value.slice(start, end));
-  }, []);
-
-  const handlePaste = useCallback(async () => {
-    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
-    if (!el) return;
-    const text = await navigator.clipboard.readText();
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const newValue = el.value.slice(0, start) + text + el.value.slice(end);
-    el.value = newValue;
-    el.selectionStart = start + text.length;
-    el.selectionEnd = start + text.length;
-    app.setActiveContent(newValue);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, [app]);
-
-  const handleSelectAll = useCallback(() => {
-    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
-    el?.focus();
-    el?.select();
-  }, []);
-
-  // --- File operations ---
   const handleSwitchTab = useCallback((index: number) => {
     app.switchTab(index);
   }, [app]);
@@ -228,7 +159,6 @@ export default function App() {
     }
   }, [app]);
 
-  // --- Find / Replace ---
   const handleFind = useCallback(() => {
     setFindReplaceOpen(true);
   }, []);
@@ -285,7 +215,75 @@ export default function App() {
     }
   }, [app]);
 
-  // --- Encryption ---
+  const handleUndo = useCallback(() => {
+    if (undoIndex > 0) {
+      const newIndex = undoIndex - 1;
+      const content = undoStack[newIndex];
+      app.setActiveContent(content);
+      setUndoIndex(newIndex);
+      const el = document.getElementById('gedit-editor');
+      (el as HTMLTextAreaElement)?.focus();
+      setStatus('Undo');
+    }
+  }, [app, undoStack, undoIndex]);
+
+  const handleRedo = useCallback(() => {
+    if (undoIndex < undoStack.length - 1) {
+      const newIndex = undoIndex + 1;
+      const content = undoStack[newIndex];
+      app.setActiveContent(content);
+      setUndoIndex(newIndex);
+      const el = document.getElementById('gedit-editor');
+      (el as HTMLTextAreaElement)?.focus();
+      setStatus('Redo');
+    }
+  }, [app, undoStack, undoIndex]);
+
+  const handleCut = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (start === end) return;
+    const selected = el.value.slice(start, end);
+    navigator.clipboard.writeText(selected);
+    const newValue = el.value.slice(0, start) + el.value.slice(end);
+    el.value = newValue;
+    el.selectionStart = start;
+    el.selectionEnd = start;
+    app.setActiveContent(newValue);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, [app]);
+
+  const handleCopy = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (start === end) return;
+    navigator.clipboard.writeText(el.value.slice(start, end));
+  }, []);
+
+  const handlePaste = useCallback(async () => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    if (!el) return;
+    const text = await navigator.clipboard.readText();
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const newValue = el.value.slice(0, start) + text + el.value.slice(end);
+    el.value = newValue;
+    el.selectionStart = start + text.length;
+    el.selectionEnd = start + text.length;
+    app.setActiveContent(newValue);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, [app]);
+
+  const handleSelectAll = useCallback(() => {
+    const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
+    el?.focus();
+    el?.select();
+  }, []);
+
   const handleEncrypt = useCallback(async () => {
     const pwd = prompt('Enter password to encrypt this tab');
     if (!pwd) return;
@@ -304,7 +302,6 @@ export default function App() {
     setStatus(ok ? 'Tab decrypted' : 'Decryption failed');
   }, [app, activeTab.encrypted]);
 
-  // --- View toggles ---
   const handleGoToLine = useCallback(() => {
     const line = prompt('Go to line:');
     if (!line) return;
@@ -315,11 +312,10 @@ export default function App() {
     }
     const el = document.getElementById('gedit-editor') as HTMLTextAreaElement;
     if (!el) return;
-    // Compute character offset for the line
     const textLines = activeTab.content.split('\n');
     let offset = 0;
     for (let i = 0; i < lineNum - 1; i++) {
-      offset += textLines[i].length + 1; // +1 for newline
+      offset += textLines[i].length + 1;
     }
     el.focus();
     el.setSelectionRange(offset, offset);
@@ -342,13 +338,11 @@ export default function App() {
     setBottomPanelOpen((prev) => !prev);
   }, []);
 
-  // --- Cursor tracking ---
   const handleCursorChange = useCallback((line: number, col: number) => {
     setCursorLine(line);
     setCursorCol(col);
   }, []);
 
-  // --- Preferences ---
   const handleSavePreferences = useCallback(() => {
     setPreferencesOpen(false);
     setStatus('Preferences saved');
@@ -445,9 +439,9 @@ export default function App() {
         onFindTextChange={setFindText}
         replaceText={replaceText}
         onReplaceTextChange={setReplaceText}
-        onFindNext={(text) => handleFindNext(text)}
-        onReplace={(findTxt, replTxt) => handleReplace(findTxt, replTxt)}
-        onReplaceAll={(findTxt, replTxt) => handleReplaceAll(findTxt, replTxt)}
+        onFindNext={(text: string) => handleFindNext(text)}
+        onReplace={(findTxt: string, replTxt: string) => handleReplace(findTxt, replTxt)}
+        onReplaceAll={(findTxt: string, replTxt: string) => handleReplaceAll(findTxt, replTxt)}
       />
       <PreferencesDialog
         open={preferencesOpen}
