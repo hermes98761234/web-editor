@@ -17,13 +17,17 @@ A self-contained, multi-tab text editor that runs entirely in the browser. No lo
 
 | Action | How |
 |--------|-----|
-| New tab | `+ New` |
+| New tab | `+ New` or File → New tab (`⌘/Ctrl+N`) |
 | Switch tabs | click a tab |
-| Close tab | `×` on a tab |
-| Share workspace | `Share` → copies a `data:` link to clipboard |
-| Import workspace | `Import` → paste a `data:` link |
-| Encrypt active tab | `Encrypt` → enter password |
-| Decrypt active tab | `Decrypt` → enter password |
+| Close tab | `×` on a tab or File → Close tab (`⌘/Ctrl+W`) |
+| Share workspace | `Share` or File → Share (`⌘/Ctrl+S`) |
+| Import workspace | `Import` or File → Import (`⌘/Ctrl+O`) |
+| Encrypt active tab | `Encrypt` or File → Encrypt tab |
+| Decrypt active tab | `Decrypt` or File → Decrypt tab |
+| Undo / Redo / Cut / Copy / Paste | Edit menu (`⌘/Ctrl+Z`, `⌘/Ctrl+Shift+Z`, `⌘/Ctrl+X`, `⌘/Ctrl+C`, `⌘/Ctrl+V`) |
+| Select all | Edit → Select all (`⌘/Ctrl+A`) |
+| Settings | Settings menu |
+| About / GitHub link | About menu |
 
 ## File layout
 

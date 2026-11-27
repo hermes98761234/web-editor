@@ -27,6 +27,10 @@ export default function App() {
   const [pwdValue, setPwdValue] = useState('');
   const pwdResolver = useRef<((v: string | null) => void) | null>(null);
   const [importValue, setImportValue] = useState('');
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+
+  // Menu dropdown state
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -65,11 +69,23 @@ export default function App() {
     }
   }, [tabs, activeIndex]);
 
+  // Close menus when clicking outside
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('[role="menu"]')) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
   const activeTab = tabs[activeIndex];
 
   const switchTab = useCallback((i: number) => {
     if (i < 0 || i >= tabs.length || i === activeIndex) return;
     setActiveIndex(i);
+    setOpenMenu(null);
   }, [tabs.length, activeIndex]);
 
   const newTab = useCallback(() => {
@@ -81,6 +97,7 @@ export default function App() {
     };
     setTabs([...tabs, t]);
     setActiveIndex(tabs.length);
+    setOpenMenu(null);
   }, [tabs.length]);
 
   const closeTab = useCallback((i: number) => {
@@ -92,6 +109,7 @@ export default function App() {
       setTabs(next);
       setActiveIndex(Math.min(activeIndex, next.length - 1));
     }
+    setOpenMenu(null);
   }, [tabs, activeIndex]);
 
   const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -115,6 +133,7 @@ export default function App() {
       document.body.removeChild(ta);
       setStatus('Workspace link copied to clipboard');
     }
+    setOpenMenu(null);
   };
 
   const exportShareLink = useCallback(() => {
@@ -150,6 +169,7 @@ export default function App() {
           setActiveIndex(Math.min(parsed.activeIndex ?? 0, parsed.tabs.length - 1));
           setImportOpen(false);
           setStatus('Workspace imported from link');
+          setOpenMenu(null);
           return;
         }
       }
@@ -207,11 +227,13 @@ export default function App() {
     } catch {
       setStatus('Encryption failed');
     }
+    setOpenMenu(null);
   }, [activeTab, activeIndex, tabs]);
 
   const decryptCurrent = useCallback(async () => {
     if (!activeTab.encrypted) {
       setStatus('Tab is not encrypted');
+      setOpenMenu(null);
       return;
     }
     const pwd = await promptPassword('Enter password to decrypt this tab');
@@ -236,6 +258,7 @@ export default function App() {
     } catch {
       setStatus('Decryption failed — wrong password?');
     }
+    setOpenMenu(null);
   }, [activeTab, activeIndex, tabs]);
 
   function promptPassword(title: string): Promise<string | null> {
@@ -251,8 +274,128 @@ export default function App() {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c] || c));
 
+  const menuItem = (label: string, shortcut: string | null, onClick: () => void) => (
+    <button
+      type="button"
+      className="menu-item"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <span className="menu-label">{label}</span>
+      {shortcut && <span className="menu-shortcut">{shortcut}</span>}
+    </button>
+  );
+
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const mod = isMac ? '⌘' : 'Ctrl';
+
   return (
     <div className="app">
+      {/* Top menu bar — real editor style */}
+      <nav className="menubar" role="menubar" aria-label="Main menu">
+        <div className="menu">
+          <button
+            type="button"
+            className={`menu-title ${openMenu === 'file' ? 'menu-open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={openMenu === 'file'}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenu(openMenu === 'file' ? null : 'file');
+            }}
+          >
+            File
+          </button>
+          {openMenu === 'file' && (
+            <div className="menu-dropdown" role="menu">
+              {menuItem('New tab', `${mod}+N`, newTab)}
+              {menuItem('Share workspace', `${mod}+S`, exportShareLink)}
+              {menuItem('Import workspace', `${mod}+O`, () => setImportOpen(true))}
+              <div className="menu-separator" />
+              {menuItem('Encrypt tab', null, encryptCurrent)}
+              {menuItem('Decrypt tab', null, decryptCurrent)}
+              <div className="menu-separator" />
+              {menuItem('Close tab', `${mod}+W`, () => closeTab(activeIndex))}
+            </div>
+          )}
+        </div>
+
+        <div className="menu">
+          <button
+            type="button"
+            className={`menu-title ${openMenu === 'edit' ? 'menu-open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={openMenu === 'edit'}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenu(openMenu === 'edit' ? null : 'edit');
+            }}
+          >
+            Edit
+          </button>
+          {openMenu === 'edit' && (
+            <div className="menu-dropdown" role="menu">
+              {menuItem('Undo', `${mod}+Z`, () => { editorRef.current?.focus(); document.execCommand('undo'); setOpenMenu(null); })}
+              {menuItem('Redo', `${mod}+Shift+Z`, () => { editorRef.current?.focus(); document.execCommand('redo'); setOpenMenu(null); })}
+              <div className="menu-separator" />
+              {menuItem('Cut', `${mod}+X`, () => { editorRef.current?.focus(); document.execCommand('cut'); setOpenMenu(null); })}
+              {menuItem('Copy', `${mod}+C`, () => { editorRef.current?.focus(); document.execCommand('copy'); setOpenMenu(null); })}
+              {menuItem('Paste', `${mod}+V`, () => { editorRef.current?.focus(); document.execCommand('paste'); setOpenMenu(null); })}
+              {menuItem('Select all', `${mod}+A`, () => { editorRef.current?.focus(); editorRef.current?.select(); setOpenMenu(null); })}
+            </div>
+          )}
+        </div>
+
+        <div className="menu">
+          <button
+            type="button"
+            className={`menu-title ${openMenu === 'settings' ? 'menu-open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={openMenu === 'settings'}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenu(openMenu === 'settings' ? null : 'settings');
+            }}
+          >
+            Settings
+          </button>
+          {openMenu === 'settings' && (
+            <div className="menu-dropdown" role="menu">
+              {menuItem('Theme: dark', null, () => { setStatus('Theme: dark'); setOpenMenu(null); })}
+              {menuItem('Font size: default', null, () => { setStatus('Font size: default'); setOpenMenu(null); })}
+              {menuItem('Wrap lines', null, () => { setStatus('Wrap lines toggled'); setOpenMenu(null); })}
+            </div>
+          )}
+        </div>
+
+        <div className="menu">
+          <button
+            type="button"
+            className={`menu-title ${openMenu === 'about' ? 'menu-open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={openMenu === 'about'}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenu(openMenu === 'about' ? null : 'about');
+            }}
+          >
+            About
+          </button>
+          {openMenu === 'about' && (
+            <div className="menu-dropdown" role="menu">
+              <div className="menu-item menu-about">
+                <span className="menu-label">Web Editor</span>
+                <span className="menu-about-sub">Multi-tab text editor · save & share via data URI · AES-GCM encryption</span>
+              </div>
+              <div className="menu-separator" />
+              {menuItem('GitHub repo', null, () => { window.open('https://github.com/hermes98761234/web-editor', '_blank'); setOpenMenu(null); })}
+            </div>
+          )}
+        </div>
+      </nav>
+
       <header className="toolbar">
         <div className="brand">Web Editor</div>
         <div className="toolbar-right">
@@ -312,6 +455,7 @@ export default function App() {
           value={activeTab.content}
           onChange={handleContentChange}
           aria-label="File content"
+          ref={editorRef}
         />
       </div>
 
@@ -400,3 +544,4 @@ export default function App() {
     </div>
   );
 }
+
