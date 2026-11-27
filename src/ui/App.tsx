@@ -30,6 +30,7 @@ export default function App() {
   });
 
   const [status, setStatus] = useState('Initializing…');
+  const [initialized, setInitialized] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
   const [pwdTitle, setPwdTitle] = useState('Enter password');
@@ -38,8 +39,22 @@ export default function App() {
 
   // Initialize the application service (load persisted tabs)
   useEffect(() => {
-    app.initialize().then(() => setStatus('Ready')).catch(() => setStatus('Init failed'));
+    app.initialize().then(() => {
+      setInitialized(true);
+      setStatus('Ready');
+    }).catch(() => {
+      setInitialized(true);
+      setStatus('Init failed');
+    });
   }, []);
+
+  if (!initialized) {
+    return (
+      <div className="app" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="status-text">{status}</div>
+      </div>
+    );
+  }
 
   const activeTab = app.getActiveTab();
   const wordCount = activeTab.content.trim().split(/\s+/).filter(Boolean).length;
